@@ -51,6 +51,9 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
       if (n >= 1 && n <= nav.length) {
         e.preventDefault()
         router.push(nav[n - 1].href)
+      } else if (e.key.toLowerCase() === 's' && !app.soundEnabled) {
+        e.preventDefault()
+        app.enableSound()
       } else if (e.key.toLowerCase() === 'r' && app.latest) {
         e.preventDefault()
         app.replay(app.latest)
@@ -68,6 +71,19 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
     if (app.settings) document.documentElement.lang = LANG_BCP47[app.settings.language as Language].split('-')[0]
   }, [app.settings])
 
+  // The banner disappears once sound is on, so move focus to the page heading
+  // instead of leaving it on a removed element.
+  const turnOnSound = () => {
+    app.enableSound()
+    setTimeout(() => {
+      const h1 = mainRef.current?.querySelector('h1') as HTMLElement | null
+      if (h1) {
+        h1.tabIndex = -1
+        h1.focus()
+      }
+    }, 50)
+  }
+
   if (bare) return <main id="main">{children}</main>
 
   const visual = app.settings?.mode === 'visual'
@@ -77,6 +93,18 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
       <a href="#main" className="sr-only-focusable fixed left-3 top-3 z-50 rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink">
         Skip to main content
       </a>
+      {/* First in the tab order (right after the skip link): without it nothing is spoken.
+          A screen-reader user tested it as the 17th Tab stop, after the whole menu. */}
+      {!app.soundEnabled && app.settings?.mode === 'voice' && (
+        <div role="region" aria-label="Sound" className="border-b-2 border-line bg-raised">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <p>Browsers need one tap before DoorVoice can speak.</p>
+            <Button variant="primary" onClick={turnOnSound} aria-keyshortcuts="Alt+S">
+              Turn on spoken announcements
+            </Button>
+          </div>
+        </div>
+      )}
       <header className="border-b-2 border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link href="/" className="text-2xl font-bold tracking-tight" aria-label="DoorVoice home">
@@ -110,17 +138,6 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
           </ul>
         </nav>
       </header>
-
-      {!app.soundEnabled && app.settings?.mode === 'voice' && (
-        <div role="region" aria-label="Sound" className="border-b-2 border-line bg-raised">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <p>Browsers need one tap before DoorVoice can speak.</p>
-            <Button variant="primary" onClick={app.enableSound}>
-              Turn on spoken announcements
-            </Button>
-          </div>
-        </div>
-      )}
 
       <main id="main" ref={mainRef} tabIndex={-1} className={cn('mx-auto max-w-6xl px-4 py-6 outline-none', visual && 'pb-56')}>
         {children}

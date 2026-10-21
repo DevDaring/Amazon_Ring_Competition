@@ -86,7 +86,7 @@ Or with Docker: `docker compose up` (Node 20 + ffmpeg image; `./data` is kept on
 4. Open **Demo** and press **Doorbell press** or **Motion: vehicle**. The signed payload goes through the real webhook route, and the announcement is spoken, captioned and logged, labelled **Simulated webhook**.
 5. Ask "Is the car still there?" or "Who is it?" on Home. Add an expectation, tap **That's wrong**, switch to **Visual** mode, open **Pipeline**, and run the **Guardrail test** samples on the Demo page.
 
-Keyboard: Alt+1…8 switch screens, Alt+T push-to-talk, Alt+R replay the last announcement, Alt+W open "Why did it say that?".
+Keyboard: Alt+S turn on sound, Alt+1…8 switch screens, Alt+T push-to-talk, Alt+R replay the last announcement, Alt+W open "Why did it say that?".
 
 ## How it works
 
@@ -146,7 +146,8 @@ On top of the five layers:
 - The page `lang` attribute follows the chosen language, so screen readers use the right voice.
 - Charts have table equivalents; images have alt text.
 - `npm run a11y` loads all 8 screens in a real browser (installed Edge or Chrome), runs axe-core against WCAG 2.1 A/AA in both themes, records tab order and checks 200% text. The first run found one contrast problem (a dark-mode danger button), now fixed; the latest run reports zero violations on all 8 screens in both themes, and no horizontal scrolling at 200% text.
-- **Not yet done:** a manual pass with NVDA, VoiceOver and TalkBack.
+- **Manual check with NVDA 2026.2 on Windows (Edge):** every control was reached and announced with the Tab key. The first pass found one real problem: "Turn on spoken announcements" was the 17th Tab stop, after the whole menu. It is now the second, right after the skip link, with an Alt+S shortcut, and focus moves to the page heading once sound is on.
+- **Not yet done:** a full task-by-task log with NVDA, and passes with VoiceOver (macOS/iOS) and TalkBack (Android).
 
 ## AWS services
 
@@ -253,7 +254,7 @@ results/                screenshots and test output from our runs
 - The Playground sandbox issues 30-minute tokens and does not deliver webhooks to a developer URL, so the demo sends signed, labelled simulated webhooks through the real receiver.
 - Cold calls are slower: the first Rekognition call took 2.3 s. Escalating to Nova Pro on three frames took about 8 s, so escalation is limited to confidence below 0.5 and to questions.
 - The block lists are English-centric. The name check can over-block capitalised word pairs. The judgment classifier is itself a model.
-- Not yet verified: a manual screen-reader pass, Bedrock Guardrails with a real guardrail ID, the S3 export, the Docker image build, and account linking against a real unclaimed token.
+- Not yet verified: VoiceOver and TalkBack passes, Bedrock Guardrails with a real guardrail ID, the S3 export, the Docker image build, and account linking against a real unclaimed token.
 
 ## Attribution
 

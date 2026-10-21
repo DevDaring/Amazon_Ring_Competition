@@ -7,7 +7,7 @@ import { PushToTalk } from './components/PushToTalk'
 import { Badge, Card } from './components/ui'
 
 export default function Home() {
-  const { selectedDevice, deviceError, latest, settings } = useApp()
+  const { selectedDevice, deviceError, latest, settings, soundEnabled } = useApp()
   const watching = selectedDevice ? selectedDevice.displayName : 'your door'
   return (
     <div className="space-y-6">
@@ -17,7 +17,11 @@ export default function Home() {
       <div className="flex flex-wrap items-center gap-2" aria-label="Camera status">
         {selectedDevice && <Badge tone={selectedDevice.online ? 'ok' : 'bad'}>{selectedDevice.online ? 'Camera online' : 'Camera offline'}</Badge>}
         {selectedDevice?.e2ee && <Badge tone="warn">End-to-end encrypted: cannot be described</Badge>}
-        {settings && <Badge>{settings.mode === 'voice' ? 'Speaking announcements' : 'Visual mode: flash, captions, vibration'}</Badge>}
+        {settings && (
+          <Badge tone={settings.mode === 'voice' && !soundEnabled ? 'warn' : 'neutral'}>
+            {settings.mode === 'visual' ? 'Visual mode: flash, captions, vibration' : soundEnabled ? 'Speaking announcements' : 'Sound is off: press Alt+S to turn it on'}
+          </Badge>
+        )}
       </div>
       {deviceError && !selectedDevice && (
         <Card role="note">
