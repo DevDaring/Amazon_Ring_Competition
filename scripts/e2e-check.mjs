@@ -3,6 +3,7 @@
 // Settings are saved first and restored at the end; "Wipe all data" is only opened
 // and cancelled, never executed.
 // Usage (app running):  node scripts/e2e-check.mjs [spoken-command.wav]
+// Hosted behind a site password: BASE_URL=https://... E2E_USER=judge E2E_PASS=... node scripts/e2e-check.mjs
 import fs from 'node:fs'
 import path from 'node:path'
 import { chromium } from 'playwright-core'
@@ -12,7 +13,10 @@ const wav = process.argv[2]
 const out = path.join(process.cwd(), 'data', 'e2e')
 fs.mkdirSync(out, { recursive: true })
 const results = []
-const api = async (p, init) => (await fetch(base + p, init)).json()
+const authHeader = process.env.E2E_USER ? { Authorization: 'Basic ' + Buffer.from(`${process.env.E2E_USER}:${process.env.E2E_PASS ?? ''}`).toString('base64') } : {}
+const httpCredentials = process.env.E2E_USER ? { username: process.env.E2E_USER, password: process.env.E2E_PASS ?? '' } : undefined
+const authed = (init = {}) => ({ ...init, headers: { ...(init.headers ?? {}), ...authHeader } })
+const api = async (p, init) => (await fetch(base + p, authed(init))).json()
 
 async function check(name, fn) {
   const t0 = Date.now()
@@ -44,7 +48,7 @@ const tokenValid = ring.mode !== 'none' && ring.expiresAt && ring.expiresAt > Da
 console.log(`Ring token: ${tokenValid ? `valid for ${Math.round((ring.expiresAt - Date.now()) / 60000)} min` : 'expired or missing (live-view checks expect the error message)'}\n`)
 
 const browser = await launch()
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, httpCredentials })
 const page = await ctx.newPage()
 const pageErrors = []
 page.on('pageerror', (e) => pageErrors.push(String(e)))
@@ -159,7 +163,7 @@ const freshEvent = async () => {
   const before = (await latestEvent())?.id
   const f = new FormData()
   f.append('type', 'button_press')
-  await fetch(`${base}/api/demo/simulate`, { method: 'POST', body: f })
+  await fetch(`${base}/api/demo/simulate`, authed({ method: 'POST', body: f }))
   return waitForNewEvent(before)
 }
 await freshEvent()
@@ -416,7 +420,7 @@ await browser.close()
 // ---------- Spoken command through the microphone (Transcribe -> router -> press) ----------
 if (wav) {
   const b2 = await launch([`--use-file-for-fake-audio-capture=${wav.replace(/\\/g, '/')}`])
-  const p2 = await b2.newPage()
+  const p2 = await (await b2.newContext({ httpCredentials })).newPage()
   await p2.goto(`${base}/demo`)
   await p2.waitForTimeout(2000)
   await check('Spoken free-form command via Alt+V on Demo ("I want to ring the doorbell")', async () => {

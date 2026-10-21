@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
 
   const raw = JSON.stringify(payload)
   const t0 = Date.now()
-  const origin = req.nextUrl.origin
+  // Straight to this server's own port: behind a proxy, nextUrl.origin is the public
+  // https:// address, which the app itself does not serve (it speaks plain HTTP).
+  const origin = `http://127.0.0.1:${process.env.PORT || 3000}`
   const res = await fetch(`${origin}/api/ring/webhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Signature': signBody(raw, config().RING_HMAC_KEY) },

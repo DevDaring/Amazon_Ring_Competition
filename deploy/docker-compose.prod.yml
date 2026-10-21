@@ -1,6 +1,8 @@
 # Production: DoorVoice listens on localhost only; a reverse proxy (Caddy) in front
 # provides HTTPS and the site password. Run from the repository root:
 #   docker compose -f deploy/docker-compose.prod.yml up -d --build
+# An explicit project name, so it never shares the generic "deploy" name with other apps.
+name: doorvoice
 services:
   doorvoice:
     build: ..
