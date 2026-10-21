@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { LANGUAGES, Language } from '@/lib/pipeline/types'
 import { providers, sttFor, withFallback } from '@/lib/providers/registry'
 import { askDoor } from '@/lib/qa/ask'
+import { cleanTranscript } from '@/lib/qa/intent'
 import { getSettings } from '@/lib/server/settings'
 
 export const runtime = 'nodejs'
@@ -31,11 +32,13 @@ export async function POST(req: NextRequest) {
       const buf = Buffer.from(await audio.arrayBuffer())
       const t0 = Date.now()
       const r = await withFallback('stt', providers().stt, (p) => p.transcribe(buf, audio.type, lang), { filter: sttFor(lang) })
-      question = r.result.text
+      question = cleanTranscript(r.result.text)
       stt = { provider: r.provider, ms: Date.now() - t0 }
     } else {
       const body = await req.json()
       question = String(body.question ?? '')
+      // Browser speech recognition can also hear the screen reader; typed questions are left as typed.
+      if (body.source === 'speech') question = cleanTranscript(question)
       if (LANGUAGES.includes(body.lang)) lang = body.lang
       deviceId = body.deviceId ?? deviceId
     }

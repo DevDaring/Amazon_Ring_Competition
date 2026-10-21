@@ -5,7 +5,30 @@ import { useApp } from '../providers'
 import { LANG_BCP47, Language } from '../lib/types'
 import { Button, cn, inputClass } from './ui'
 
-type Phase = 'idle' | 'listening' | 'thinking'
+type Phase = 'idle' | 'preparing' | 'listening' | 'thinking'
+
+// Screen readers speak when the button changes ("Stop and send, pressed"). If the
+// microphone opened at once it would record that speech instead of the user. So:
+// change the button and a short status first, wait for the screen reader to finish,
+// play a beep, and only then start listening, without touching the page again.
+const LISTEN_DELAY_MS = 1500
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.2, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.2)
+    return new Promise<void>((r) => setTimeout(() => (ctx.close(), r()), 250))
+  } catch {
+    return Promise.resolve()
+  }
+}
 
 /**
  * Ask the Door. Press once to talk, press again to send (Alt+T works anywhere).
@@ -24,9 +47,11 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
   const chunks = useRef<Blob[]>([])
   const srRef = useRef<any>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>()
+  const prepTimer = useRef<ReturnType<typeof setTimeout>>()
+  const streamRef = useRef<MediaStream | null>(null)
 
   const ask = useCallback(
-    async (body: FormData | { question: string }) => {
+    async (body: FormData | { question: string; source?: 'speech' }) => {
       setPhase('thinking')
       setStatus('Thinking…')
       try {
@@ -58,6 +83,16 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
 
   const stop = useCallback(() => {
     clearTimeout(timer.current)
+    if (prepTimer.current) {
+      // Pressed again before the beep: cancel instead of sending an empty recording.
+      clearTimeout(prepTimer.current)
+      prepTimer.current = undefined
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
+      setPhase('idle')
+      setStatus('Cancelled.')
+      return
+    }
     if (srRef.current) {
       srRef.current.stop()
       return
@@ -75,7 +110,7 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
       sr.onresult = (e: any) => {
         const q = e.results[0][0].transcript
         srRef.current = null
-        ask({ question: q })
+        ask({ question: q, source: 'speech' })
       }
       sr.onerror = () => {
         srRef.current = null
@@ -88,13 +123,21 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
           setPhase('idle')
         }
       }
-      sr.start()
-      setPhase('listening')
-      setStatus('Listening. Speak now.')
+      setPhase('preparing')
+      setStatus('Speak after the beep.')
+      prepTimer.current = setTimeout(async () => {
+        prepTimer.current = undefined
+        await beep()
+        sr.start()
+        setPhase('listening')
+      }, LISTEN_DELAY_MS)
       return
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      })
+      streamRef.current = stream
       const rec = new MediaRecorder(stream)
       recRef.current = rec
       chunks.current = []
@@ -106,17 +149,23 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
         form.append('audio', blob, 'question.webm')
         ask(form)
       }
-      rec.start()
-      setPhase('listening')
-      setStatus('Listening. Press again (or Alt+T) to send.')
-      timer.current = setTimeout(stop, 10_000) // questions are short; stop after 10 s
+      setPhase('preparing')
+      setStatus('Speak after the beep.')
+      prepTimer.current = setTimeout(async () => {
+        prepTimer.current = undefined
+        await beep()
+        rec.start()
+        // No status change here: anything new on the page would make the screen reader talk over the user.
+        setPhase('listening')
+        timer.current = setTimeout(stop, 10_000) // questions are short; stop after 10 s
+      }, LISTEN_DELAY_MS)
     } catch {
       setStatus('Microphone not available. Type your question instead.')
     }
   }, [ask, browserStt, lang, stop])
 
   const toggle = useCallback(() => {
-    if (phase === 'listening') stop()
+    if (phase === 'listening' || phase === 'preparing') stop()
     else if (phase === 'idle') start()
   }, [phase, start, stop])
 
@@ -140,15 +189,17 @@ export function PushToTalk({ compact = false }: { compact?: boolean }) {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Button
           size="lg"
-          variant={phase === 'listening' ? 'danger' : 'primary'}
-          aria-pressed={phase === 'listening'}
+          variant={phase === 'listening' || phase === 'preparing' ? 'danger' : 'primary'}
+          aria-pressed={phase === 'listening' || phase === 'preparing'}
           aria-keyshortcuts="Alt+T"
           disabled={phase === 'thinking'}
           onClick={toggle}
         >
-          {phase === 'listening' ? 'Stop and send' : phase === 'thinking' ? 'Thinking…' : 'Push to talk'}
+          {phase === 'listening' || phase === 'preparing' ? 'Stop and send' : phase === 'thinking' ? 'Thinking…' : 'Push to talk'}
         </Button>
-        <span className="text-base text-muted">{browserStt ? 'Using this browser’s speech recognition' : 'Shortcut: Alt+T'}</span>
+        <span className="text-base text-muted">
+          {browserStt ? 'Using this browser’s speech recognition' : 'Shortcut: Alt+T'} · Speak after the beep. With a screen reader, headphones stop it being recorded.
+        </span>
       </div>
       <form
         className="mt-4 flex flex-wrap gap-2"

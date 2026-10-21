@@ -4,7 +4,7 @@ import { setConfigForTests } from '@/lib/config'
 import { stage0 } from '@/lib/pipeline/stage0'
 import { confirmExpectation, cosine, embed, stage2 } from '@/lib/pipeline/stage2'
 import { compose } from '@/lib/narration/composer'
-import { classifyQuestion } from '@/lib/qa/intent'
+import { classifyQuestion, cleanTranscript } from '@/lib/qa/intent'
 import { buildSimulatedPayload, parseWebhook, signBody, verifySignature } from '@/lib/ring/webhook'
 import { computeNonce, matchUnclaimed, maskIdentifier, nonceMatches } from '@/lib/ring/linking'
 import { parseExpectationsRule, parseWindow } from '@/lib/server/expectations'
@@ -158,6 +158,19 @@ describe('Ask the Door intent classifier', () => {
     ['¿Quién es?', 'identity'],
   ])('%s -> %s', (q, intent) => {
     expect(classifyQuestion(q)).toBe(intent)
+  })
+})
+
+describe('Spoken question cleanup (screen reader picked up by the microphone)', () => {
+  it('removes NVDA announcements of the push-to-talk button', () => {
+    expect(cleanTranscript('Stop and send toggle button pressed. Speak after the beep. Is the car still there?')).toBe('Is the car still there?')
+    expect(cleanTranscript('Listening. Who is it?')).toBe('Who is it?')
+  })
+  it('leaves a normal question alone', () => {
+    expect(cleanTranscript('What are they holding?')).toBe('What are they holding?')
+  })
+  it('still classifies after cleanup', () => {
+    expect(classifyQuestion(cleanTranscript('Push to talk button. Is anyone still there?'))).toBe('presence')
   })
 })
 

@@ -30,6 +30,20 @@ const RULES: Array<[Intent, RegExp]> = [
   ],
 ]
 
+// What a screen reader says around the push-to-talk button. If the microphone picks it
+// up despite the delay-and-beep, it is removed from the transcript before classifying.
+const UI_PHRASES = [
+  'speak after the beep', 'stop and send', 'push to talk', 'toggle button', 'not pressed', 'pressed',
+  'button', 'listening', 'press again', 'alt plus t', 'alt t', 'alt+t', 'thinking', 'ask the door',
+  'or type a question', 'cancelled', 'beep',
+]
+const UI_PHRASE_RE = new RegExp(`\\b(?:${UI_PHRASES.map((p) => p.replace(/[+]/g, '\\+')).join('|')})\\b[\\s,.;:!-]*`, 'gi')
+
+/** Removes screen-reader announcements of DoorVoice's own controls from a spoken question. */
+export function cleanTranscript(text: string): string {
+  return text.replace(UI_PHRASE_RE, ' ').replace(/\s{2,}/g, ' ').replace(/^[\s,.;:!-]+/, '').trim()
+}
+
 export function classifyQuestion(question: string): Intent {
   const q = question.trim()
   for (const [intent, re] of RULES) if (re.test(q)) return intent
