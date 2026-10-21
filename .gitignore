@@ -5,7 +5,7 @@
 !.env.example
 
 # Everything the app records (events, frames, audio, dataset, sandbox fixtures, DB)
-data/
+/data/
 *.db
 *.db-journal
 

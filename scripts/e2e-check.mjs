@@ -262,6 +262,10 @@ await check('Push to talk: "Speak after the beep", Cancel before beep', async ()
 // ---------- Live ----------
 await go('/live')
 await check(`Live: Start live view (${tokenValid ? 'expects video' : 'expects clear error, token expired'})`, async () => {
+  if (!tokenValid && (await btn('No camera yet').count())) {
+    // No token: no camera can be listed, so the button is disabled and the reason is shown.
+    return `button disabled; ${(await page.getByRole('alert').first().textContent().catch(() => 'no reason shown')).slice(0, 90)}`
+  }
   await btn('Start live view').click()
   if (tokenValid) {
     await page.waitForFunction(() => (document.querySelector('video')?.videoWidth ?? 0) > 0, null, { timeout: 30000 })
