@@ -1,0 +1,22 @@
+DoorVoice live smoke test against the Ring Developer Playground sandbox
+(node scripts/live-smoke.mjs, production build, Edge headless, 2026-10-21, times UTC)
+
+07:18:53 clicked Start live view
+07:18:56 video playing: true after 4555 ms { width: 1280, height: 720 }
+07:19:01 simulated webhook ack { status: 'accepted', ack_ms: 14 }
+07:19:10 event: announced | Four vehicles are in view, further away. One grey car is pulling in. | Live view frame (sandbox WHEP stream) | 5266 ms
+   stage0 passed 1ms
+   frames passed 72ms
+   stage1 passed 2297ms rekognition
+   stage2 passed 3ms
+   stage3 passed 3823ms bedrock:amazon.nova-lite-v1:0 (started in parallel with Stage 1)
+   guardrails passed 1037ms nova-micro-classifier
+   narration passed 0ms
+   speech passed 309ms polly:Joanna
+07:19:15 ask "Is the car still there?" -> [vehicle_presence] Yes, a vehicle is still there.
+07:19:22 ask "Describe everything" -> [describe] Five vehicles are in view, further away. One grey car is pulling in. Several cars parked in a lot.
+
+Spoken question via Amazon Transcribe streaming: "Is anyone still there?" transcribed exactly in 1901 ms -> [presence] No one is visible at the door now.
+
+The webhook above is a simulated, HMAC-signed Ring payload sent through the real /api/ring/webhook route (labelled "Simulated webhook" in the UI);
+the camera frames came from the real sandbox live stream.

@@ -1,0 +1,9 @@
+services:
+  doorvoice:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - ./data:/app/data   # events, frames, audio, dataset and the SQLite DB stay on the host
+    restart: unless-stopped

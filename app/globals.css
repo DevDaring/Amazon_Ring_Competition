@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Colour tokens. Text/background pairs must meet WCAG AA (4.5:1); tests/contrast.test.ts
+   parses this file and fails the build if any pair drops below that, in both themes. */
+:root {
+  --bg: #f6f5f0;
+  --surface: #ffffff;
+  --raised: #eceae2;
+  --ink: #12161c;
+  --muted: #4a5260;
+  --line: #c9c6bb;
+  --accent: #0b5cad;
+  --accent-ink: #ffffff;
+  --ok: #17663a;
+  --warn: #8a4b00;
+  --bad: #b3261e;
+  --bad-ink: #ffffff;
+  --focus: #c75300;
+  --flash-doorbell: #0b5cad;
+  --flash-person: #17663a;
+  --flash-vehicle: #6b3fa0;
+  --flash-package: #8a4b00;
+  --flash-other: #33404f;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1216;
+    --surface: #171b21;
+    --raised: #222831;
+    --ink: #f2f1ec;
+    --muted: #b4bcc8;
+    --line: #3a434f;
+    --accent: #7cb8ff;
+    --accent-ink: #08121f;
+    --ok: #6fd39a;
+    --warn: #f3b25b;
+    --bad: #ff8a80;
+    --bad-ink: #1a0605;
+    --focus: #ffb86b;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1216;
+  --surface: #171b21;
+  --raised: #222831;
+  --ink: #f2f1ec;
+  --muted: #b4bcc8;
+  --line: #3a434f;
+  --accent: #7cb8ff;
+  --accent-ink: #08121f;
+  --ok: #6fd39a;
+  --warn: #f3b25b;
+  --bad: #ff8a80;
+  --bad-ink: #1a0605;
+  --focus: #ffb86b;
+  color-scheme: dark;
+}
+
+html {
+  /* rem-based everything so 200% browser text zoom reflows instead of clipping */
+  font-size: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Bengali', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+/* A thick, high-contrast focus ring on everything keyboard-reachable. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

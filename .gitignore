@@ -1,0 +1,30 @@
+# Secrets: never commit
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Everything the app records (events, frames, audio, dataset, sandbox fixtures, DB)
+data/
+*.db
+*.db-journal
+
+# Dependencies and builds
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

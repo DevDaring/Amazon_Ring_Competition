@@ -1,0 +1,97 @@
+// SQLite keeps DoorVoice runnable with zero cloud setup. JSON columns are stored
+// as TEXT because Prisma's SQLite JSON support is still uneven across versions.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/doorvoice.db"
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  ringEventId   String?
+  deviceId      String?
+  cameraName    String   @default("front door")
+  type          String
+  subType       String?
+  simulated     Boolean  @default(false)
+  status        String   @default("queued") // queued | processing | announced | silent | failed
+  receivedAt    DateTime @default(now())
+  narration     String?
+  language      String   @default("en")
+  confidence    Float?
+  urgency       String?
+  modelUsed     String?
+  guardFired    Boolean  @default(false)
+  frameSource   String?
+  framePath     String?
+  stagesJson    String   @default("[]")
+  descriptionJson String?
+  guardJson     String?
+  stage1Json    String?
+  stage2Json    String?
+  audioPath     String?
+  ttsProvider   String?
+  totalMs       Int?
+  costUsd       Float?
+  feedback      String?
+  corrections   Correction[]
+}
+
+model Correction {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  verdict     String   // correct | wrong | mute
+  userLabel   String?
+  objectType  String?
+  cameraName  String?
+  cropPath    String?
+  modelOutput String?
+  source      String   @default("user_feedback")
+  exported    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Expectation {
+  id             String   @id @default(cuid())
+  text           String
+  kind           String   // delivery | visitor | vehicle | service
+  objectType     String?  // grocery_bag | package | food | ...
+  vehicleColour  String?
+  vehicleType    String?
+  windowStart    DateTime
+  windowEnd      DateTime
+  status         String   @default("pending") // pending | met | expired
+  matchedEventId String?
+  matchedAt      DateTime?
+  createdAt      DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Caregiver {
+  id         String   @id @default(cuid())
+  label      String
+  shareToken String   @unique
+  createdAt  DateTime @default(now())
+}
+
+model QaLog {
+  id         String   @id @default(cuid())
+  question   String
+  intent     String
+  answer     String
+  language   String
+  modelUsed  String?
+  guardFired Boolean  @default(false)
+  stagesJson String   @default("[]")
+  createdAt  DateTime @default(now())
+}
