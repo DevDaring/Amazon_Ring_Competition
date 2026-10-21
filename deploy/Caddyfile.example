@@ -1,0 +1,54 @@
+# DoorVoice behind Caddy: automatic HTTPS, one site password, and the few paths
+# that must stay open without it (Ring's webhook, account linking, caregiver links).
+# Replace the host names and paste a hash from: caddy hash-password
+doorvoice.example.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		X-Robots-Tag "noindex, nofollow"
+		Permissions-Policy "microphone=(self), camera=(), geolocation=(), payment=()"
+		-Server
+	}
+	request_body {
+		max_size 10MB
+	}
+
+	# Open without the password: Ring must reach the webhook, a Ring user signs in on
+	# /link, and a caregiver opens a private digest link (the token is the credential).
+	@public {
+		path /api/ring/webhook /link /_next/* /icon.svg /favicon.ico
+	}
+	@linkPost {
+		method POST
+		path /api/ring/link
+	}
+	@digest {
+		path /digest/*
+	}
+	@digestApi {
+		path /api/digest
+		query token=*
+	}
+	handle @public {
+		reverse_proxy 127.0.0.1:8190
+	}
+	handle @linkPost {
+		reverse_proxy 127.0.0.1:8190
+	}
+	handle @digest {
+		reverse_proxy 127.0.0.1:8190
+	}
+	handle @digestApi {
+		reverse_proxy 127.0.0.1:8190
+	}
+	handle {
+		basic_auth {
+			judge <bcrypt-hash-from-caddy-hash-password>
+		}
+		reverse_proxy 127.0.0.1:8190 {
+			flush_interval -1 # live updates (server-sent events) must not be buffered
+		}
+	}
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import type { UiCommand } from '@/lib/qa/commands'
 import { runCommand as executeCommand } from './lib/runCommand'
 import { Announcement, Device, LANG_BCP47, Language, Settings, StageMsg } from './lib/types'
@@ -80,6 +80,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [liveText, setLiveText] = useState('')
   const [whyId, setWhyId] = useState<string | null>(null)
   const router = useRouter()
+  // The caregiver digest and the Ring account-link pages are public (no site password);
+  // they must not call the password-protected APIs, or the browser would ask for it.
+  const pathname = usePathname()
+  const isPublicPage = pathname.startsWith('/digest/') || pathname.startsWith('/link')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const latestRef = useRef<Announcement | null>(null)
   const settingsRef = useRef<Settings | null>(null)
@@ -88,11 +92,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   soundRef.current = soundEnabled
 
   useEffect(() => {
+    if (isPublicPage) return
     fetch('/api/settings').then((r) => r.json()).then(setSettings).catch(() => {})
     setSoundEnabled(readLocal('dv-sound') === 'on')
-  }, [])
+  }, [isPublicPage])
 
   const refreshDevices = useCallback(() => {
+    if (isPublicPage) return
     fetch('/api/ring/devices')
       .then(async (r) => {
         const d = await r.json()
@@ -100,7 +106,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setDeviceError(d.error ?? null)
       })
       .catch((e) => setDeviceError(String(e)))
-  }, [])
+  }, [isPublicPage])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(refreshDevices, [refreshDevices])
 
   const updateSettings = useCallback(async (patch: Partial<Settings>) => {
@@ -149,6 +156,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Server-sent events: stage progress + announcements.
   useEffect(() => {
+    if (isPublicPage) return
     let es: EventSource | null = null
     let retry: ReturnType<typeof setTimeout>
     const connect = () => {
@@ -179,7 +187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(retry)
       es?.close()
     }
-  }, [present])
+  }, [present, isPublicPage])
 
   const enableSound = useCallback(() => {
     setSoundEnabled(true)
