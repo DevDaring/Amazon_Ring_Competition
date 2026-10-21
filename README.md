@@ -79,6 +79,20 @@ Or with Docker: `docker compose up` (Node 20 + ffmpeg image; `./data` is kept on
 
 `.env.example` lists every key with a short comment.
 
+### Live demo
+
+A hosted copy runs at **https://doorvoice.154-12-116-152.sslip.io** (it will also answer at `doorvoice.koushikdeb.com` once that DNS record exists). The site is password-protected because it calls paid AWS services; judges receive the login in the Devpost testing instructions. Ring's webhook URL, the account-link page and caregiver digest links stay reachable without it.
+
+### Deploying on your own server
+
+```bash
+git clone https://github.com/DevDaring/Amazon_Ring_Competition.git doorvoice && cd doorvoice
+cp .env.example .env    # fill in keys; set APP_BASE_URL and PUBLIC_WEBHOOK_URL to your https address
+docker compose -f deploy/docker-compose.prod.yml up -d --build   # listens on 127.0.0.1:8190 only
+```
+
+Put a reverse proxy with HTTPS in front; `deploy/Caddyfile.example` shows the Caddy site block, including the password and the paths that must stay public.
+
 ## Using the app
 
 1. Open **Settings → Ring connection** and paste a fresh Playground token. Home should read "Watching Playground Device".
@@ -148,6 +162,7 @@ On top of the five layers:
 - Charts have table equivalents; images have alt text.
 - `npm run a11y` loads all 8 screens in a real browser (installed Edge or Chrome), runs axe-core against WCAG 2.1 A/AA in both themes, records tab order and checks 200% text. The first run found one contrast problem (a dark-mode danger button), now fixed; the latest run reports zero violations on all 8 screens in both themes, and no horizontal scrolling at 200% text.
 - **Manual check with NVDA 2026.2 on Windows (Edge):** every control was reached and announced with the Tab key. The first pass found one real problem: "Turn on spoken announcements" was the 17th Tab stop, after the whole menu. It is now the second, right after the skip link, with an Alt+S shortcut, and focus moves to the page heading once sound is on.
+- **Commands that span screens:** \"I want to see live video\" or \"start live view\" from any screen opens Live and starts the stream; a button that is not on the current screen is found on the screen that has it.
 - **Voice capture:** after the beep, recording stops by itself 1.2 s after you finish speaking (10 s at most).
 - **Push-to-talk with a screen reader:** the same NVDA test found that the microphone recorded NVDA announcing the button. DoorVoice now changes the button and says "Speak after the beep", waits 1.5 s, beeps, and only then listens, without changing the page again. Echo cancellation is on, and screen-reader phrases ("Stop and send, toggle button, pressed") are stripped from spoken transcripts. Headphones remain the most reliable setup.
 - **Not yet done:** a full task-by-task log with NVDA, and passes with VoiceOver (macOS/iOS) and TalkBack (Android).
@@ -219,7 +234,7 @@ Test output: [`results/test-results.txt`](results/test-results.txt). Live run lo
 ## Tests
 
 ```bash
-npm test        # 144 passing, 2 opt-in live suites skipped
+npm test        # 147 passing, 2 opt-in live suites skipped
 ```
 
 - `tests/guardrails.test.ts`: 36 safety-layer cases (race, ethnicity, gender, age, religion, disability and body terms; "suspicious", "lurking", "casing"; names; identity claims; licence plates; printed names, addresses and IDs; schema failures; judgment and plausibility fallbacks).

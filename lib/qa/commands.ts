@@ -3,7 +3,7 @@
 // The browser then finds the button by its accessible name and presses it.
 
 export type UiCommand =
-  | { type: 'navigate'; path: string; page: string }
+  | { type: 'navigate'; path: string; page: string; then?: string }
   | { type: 'press'; target: string }
   | { type: 'language'; lang: 'en' | 'hi' | 'bn' | 'es' }
   | { type: 'mode'; mode: 'voice' | 'visual' }
@@ -11,6 +11,33 @@ export type UiCommand =
   | { type: 'why' }
   | { type: 'help' }
   | { type: 'close' }
+
+/**
+ * Main actions on each screen, so "start live view" said on Home (or "I want to see
+ * live video") goes to the right screen and presses the button there.
+ */
+export const PAGE_ACTIONS: Record<string, { path: string; page: string; buttons: string[] }> = {
+  live: { path: '/live', page: 'Live', buttons: ['Start live view', 'Stop live view'] },
+  demo: {
+    path: '/demo',
+    page: 'Demo',
+    buttons: ['Doorbell press', 'Motion: person', 'Motion: vehicle', 'Motion: general', 'Motion: other', 'Camera offline'],
+  },
+  settings: { path: '/settings', page: 'Settings', buttons: ['Export dataset now', 'Apply retention now', 'Save token'] },
+  caregiver: { path: '/caregiver', page: 'Caregiver', buttons: ['Create digest link'] },
+  expecting: { path: '/expecting', page: 'Expecting', buttons: ['Say it'] },
+}
+
+/** Finds a button on another screen that matches a spoken target. */
+export function findPageAction(target: string): { path: string; page: string; button: string } | null {
+  let best: { path: string; page: string; button: string; score: number } | null = null
+  for (const a of Object.values(PAGE_ACTIONS))
+    for (const b of a.buttons) {
+      const score = matchScore(target, b)
+      if (score >= 60 && (!best || score > best.score)) best = { path: a.path, page: a.page, button: b, score }
+    }
+  return best ? { path: best.path, page: best.page, button: best.button } : null
+}
 
 const PAGES: Array<[RegExp, string, string]> = [
   [/^(home|main|होम|হোম|inicio)$/, '/', 'Home'],
@@ -75,6 +102,12 @@ export function parseCommand(input: string): UiCommand | null {
   if (lang) return language(lang[1])
   const bareLang = language(t)
   if (bareLang) return bareLang
+
+  // Live video in any phrasing that is clearly about watching: go to Live and start it.
+  if (/\bstop\b.*\b(live|video|stream|camera)\b/.test(t)) return { type: 'navigate', path: '/live', page: 'Live', then: 'Stop live view' }
+  if (/\b(see|watch|show|start|open|play|view|turn on)\b.*\b(live( video| view| stream| feed)?|camera( feed)?|video)\b/.test(t)) {
+    return { type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' }
+  }
 
   // Navigation: "go to settings", "open the demo page", or just "settings".
   const nav = t.match(/^(?:go to|open|show|take me to|navigate to|ve a|abre|खोलो|खोलें|খোলো|খুলুন)\s+(.+)$/) || t.match(/^(.+?)\s+(?:खोलो|खोलें|पर जाओ|খোলো|খুলুন|এ যাও)$/)

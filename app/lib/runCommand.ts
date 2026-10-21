@@ -1,6 +1,6 @@
 'use client'
 
-import { matchScore, type UiCommand } from '@/lib/qa/commands'
+import { findPageAction, matchScore, type UiCommand } from '@/lib/qa/commands'
 import type { Announcement, Language, Settings } from './types'
 import { LANG_LABEL } from './types'
 
@@ -59,10 +59,36 @@ export function controlNames(limit = 14, mainOnly = true): string[] {
   return out
 }
 
+function pressNamed(name: string): string {
+  const c = controls().find((x) => matchScore(name, x.name) >= 80)
+  if (!c) return `I could not find ${name} on this screen.`
+  c.el.focus()
+  c.el.click()
+  return `Pressed ${c.name}.`
+}
+
+/** After navigating, wait (up to 8 s) for the button to render and become enabled, then press it. */
+function pressWhenReady(name: string) {
+  const started = Date.now()
+  const tick = () => {
+    const c = controls().find((x) => matchScore(name, x.name) >= 80)
+    if (c) {
+      c.el.focus()
+      c.el.click()
+    } else if (Date.now() - started < 8000) setTimeout(tick, 300)
+  }
+  setTimeout(tick, 400)
+}
+
 export function runCommand(cmd: UiCommand, deps: CommandDeps): string {
   switch (cmd.type) {
     case 'navigate':
+      if (cmd.then && location.pathname === cmd.path) return pressNamed(cmd.then)
       deps.navigate(cmd.path)
+      if (cmd.then) {
+        pressWhenReady(cmd.then)
+        return `Opening ${cmd.page} and pressing ${cmd.then}.`
+      }
       return `Opening ${cmd.page}.`
     case 'language':
       deps.updateSettings({ language: cmd.lang as Language })
@@ -91,6 +117,13 @@ export function runCommand(cmd: UiCommand, deps: CommandDeps): string {
         .sort((a, b) => b.score - a.score)
       const best = ranked[0]
       if (!best || best.score < 40) {
+        // Not on this screen: is it a main button on another screen?
+        const elsewhere = findPageAction(cmd.target)
+        if (elsewhere) {
+          deps.navigate(elsewhere.path)
+          pressWhenReady(elsewhere.button)
+          return `Opening ${elsewhere.page} and pressing ${elsewhere.button}.`
+        }
         return `I could not find a button called “${cmd.target}”. Buttons here include: ${controlNames(6).join('; ')}. Say help to hear them all.`
       }
       // A destructive confirmation needs the exact words, never a loose match.

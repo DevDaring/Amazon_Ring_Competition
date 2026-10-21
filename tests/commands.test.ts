@@ -5,8 +5,8 @@ import { validateRoute } from '@/lib/qa/router'
 describe('voice commands', () => {
   it.each([
     ['Press doorbell press', { type: 'press', target: 'doorbell press' }],
-    ['Click the start live view button.', { type: 'press', target: 'start live view' }],
-    ['Start live view', { type: 'press', target: 'start live view' }],
+    ['Click the start live view button.', { type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' }],
+    ['Start live view', { type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' }],
     ['Turn on spoken announcements', { type: 'press', target: 'turn on spoken announcements' }],
     ['Go to settings', { type: 'navigate', path: '/settings', page: 'Settings' }],
     ['Open the demo page', { type: 'navigate', path: '/demo', page: 'Demo' }],
@@ -20,6 +20,9 @@ describe('voice commands', () => {
     ['Replay', { type: 'replay' }],
     ['Why did it say that', { type: 'why' }],
     ['Close', { type: 'close' }],
+    ['I want to see live video', { type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' }],
+    ['Show me the camera', { type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' }],
+    ['Stop the live video', { type: 'navigate', path: '/live', page: 'Live', then: 'Stop live view' }],
     ['डेमो खोलो', { type: 'navigate', path: '/demo', page: 'Demo' }],
   ])('%s', (said, expected) => {
     expect(parseCommand(said)).toEqual(expected)
@@ -50,5 +53,7 @@ describe('voice commands', () => {
     expect(validateRoute({ type: 'language', target: 'fr' }, controls)).toBeNull()
     expect(validateRoute({ type: 'question' }, controls)).toBeNull()
     expect(validateRoute('not json', controls)).toBeNull()
+    expect(validateRoute({ type: 'navigate', target: 'live', then: 'Start live view' }, controls)).toEqual({ type: 'navigate', path: '/live', page: 'Live', then: 'Start live view' })
+    expect(validateRoute({ type: 'navigate', target: 'live', then: 'Format the disk' }, controls)).toEqual({ type: 'navigate', path: '/live', page: 'Live' })
   })
 })
