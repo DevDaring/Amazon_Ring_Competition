@@ -57,7 +57,8 @@ export async function acquireFrames(opts: {
       img = await downloadImageAt(opts.deviceId, opts.timestampMs)
     } catch (e) {
       // Recording may lag the event by a second or two (425 / 416); try once more.
-      if (e instanceof RingApiError && (e.status === 425 || e.status === 416) && Date.now() - opts.timestampMs < 20_000) {
+      // Simulated events skip the retry: the sandbox camera is usually not recording "now".
+      if (!opts.simulated && e instanceof RingApiError && (e.status === 425 || e.status === 416) && Date.now() - opts.timestampMs < 20_000) {
         await sleep(1500)
         img = await downloadLatestImage(opts.deviceId, opts.timestampMs - 10_000)
       } else throw e
@@ -76,7 +77,7 @@ export async function acquireFrames(opts: {
 
   // 4. No snapshot? A short clip may still have frames. Skipped when the snapshot
   //    worked, because the extra download would cost 2-4 s of the 5 s budget.
-  if (!frames.length && !notes.some((n) => /No Ring token|expired/.test(n))) {
+  if (!frames.length && !opts.simulated && !notes.some((n) => /No Ring token|expired/.test(n))) {
     try {
       const clip = await downloadClip(opts.deviceId, opts.timestampMs - 1000, 3000)
       const extra = await clipToFrames(clip.buf, 1, 3)

@@ -8,6 +8,7 @@ import { useApp } from '../providers'
 import { LANG_BCP47, LANG_LABEL, Language } from '../lib/types'
 import { Button, cn } from './ui'
 import { WhyDialog } from './WhyDialog'
+import { VoiceControl } from './VoiceControl'
 
 const NAV = [
   { href: '/', label: 'Home' },
@@ -114,6 +115,7 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
             <span className="text-base text-muted" aria-live="polite">
               {app.connected ? 'Listening for events' : 'Reconnecting…'}
             </span>
+            <VoiceControl />
             <LanguageToggle />
             <ModeToggle />
           </div>

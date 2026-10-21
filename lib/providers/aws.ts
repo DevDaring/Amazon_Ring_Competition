@@ -43,7 +43,9 @@ const bedrockClient = () => (bedrock ??= new BedrockRuntimeClient(creds()))
 /** Bedrock Converse works the same for Nova and Claude, so one call site serves both tiers. */
 async function converse(modelId: string, system: string, content: ContentBlock[], maxTokens: number, prefill?: string): Promise<ModelCall> {
   const messages: Message[] = [{ role: 'user', content }]
-  // Pre-filling "{" keeps both Nova and Claude from wrapping the JSON in prose.
+  // Pre-filling "{" is supported but not used for JSON: Nova sometimes continued it as
+  // {"": ...}, which the schema layer (rightly) rejects. Without it Nova returns plain or
+  // fenced JSON, and extractJson() removes the fences.
   if (prefill) messages.push({ role: 'assistant', content: [{ text: prefill }] })
   const t0 = Date.now()
   const out = await bedrockClient().send(
@@ -90,7 +92,7 @@ export class BedrockVision implements VisionProvider {
     const model = strong ? c.BEDROCK_MODEL_STRONG : c.BEDROCK_MODEL_FAST
     const content = [...(await jpegBlocks(req.images)), { text: req.prompt }]
     try {
-      const call = await converse(model, req.system, content, req.maxTokens ?? 700, '{')
+      const call = await converse(model, req.system, content, req.maxTokens ?? 700)
       return { ...call, text: extractJson(call.text) }
     } catch (e) {
       // A strong model can be denied on its own (e.g. a Marketplace subscription without a
@@ -98,7 +100,7 @@ export class BedrockVision implements VisionProvider {
       // fast one, rather than letting the whole of Bedrock fall over to another provider.
       if (strong && isPermanentError(e)) {
         park(`bedrock:${model}`, String((e as Error).message).slice(0, 200), 60 * 60_000)
-        const call = await converse(c.BEDROCK_MODEL_FAST, req.system, content, req.maxTokens ?? 700, '{')
+        const call = await converse(c.BEDROCK_MODEL_FAST, req.system, content, req.maxTokens ?? 700)
         return { ...call, text: extractJson(call.text), model: `${call.model} (strong model unavailable)` }
       }
       throw e
@@ -112,7 +114,8 @@ export class BedrockText implements TextProvider {
     return hasAws() && !isParked('bedrock')
   }
   complete(req: TextRequest) {
-    return converse(config().BEDROCK_MODEL_FAST, req.system, [{ text: req.prompt }], req.maxTokens ?? 400)
+    const model = req.tier === 'tiny' ? config().BEDROCK_MODEL_JUDGE : config().BEDROCK_MODEL_FAST
+    return converse(model, req.system, [{ text: req.prompt }], req.maxTokens ?? 400)
   }
 }
 
@@ -235,7 +238,7 @@ export class NovaDetector implements ObjectDetector {
           '"people_x":[horizontal centre of each person as a fraction 0-1 of the frame width]}',
       },
     ]
-    const call = await converse(config().BEDROCK_MODEL_FAST, 'You count objects in images. Output JSON only.', content, 120, '{')
+    const call = await converse(config().BEDROCK_MODEL_FAST, 'You count objects in images. Output JSON only.', content, 120)
     let parsed: any = {}
     try {
       parsed = JSON.parse(extractJson(call.text))

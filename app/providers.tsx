@@ -1,6 +1,9 @@
 'use client'
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import type { UiCommand } from '@/lib/qa/commands'
+import { runCommand as executeCommand } from './lib/runCommand'
 import { Announcement, Device, LANG_BCP47, Language, Settings, StageMsg } from './lib/types'
 
 interface AppState {
@@ -23,6 +26,8 @@ interface AppState {
   liveText: string
   whyId: string | null
   openWhy: (id: string | null) => void
+  /** Carries out a voice command and speaks the result; returns the feedback text. */
+  runCommand: (cmd: UiCommand) => string
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -74,7 +79,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [flash, setFlash] = useState<{ colour: string; text: string } | null>(null)
   const [liveText, setLiveText] = useState('')
   const [whyId, setWhyId] = useState<string | null>(null)
+  const router = useRouter()
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const latestRef = useRef<Announcement | null>(null)
   const settingsRef = useRef<Settings | null>(null)
   const soundRef = useRef(false)
   settingsRef.current = settings
@@ -184,6 +191,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     el.play().catch(() => {})
   }, [])
 
+  latestRef.current = announcements[0] ?? null
+
+  // Feedback for commands: the assertive live region for screen readers, and the
+  // browser voice for everyone else in Voice mode.
+  const notify = useCallback((text: string) => {
+    setLiveText('')
+    setTimeout(() => setLiveText(text), 50)
+    const s = settingsRef.current
+    if (s?.mode === 'voice' && soundRef.current) speakWithBrowser(text, 'en', s.speechRate ?? 1)
+  }, [])
+
+  const runCommand = useCallback(
+    (cmd: UiCommand) => {
+      const msg = executeCommand(cmd, {
+        navigate: (path) => router.push(path),
+        updateSettings: (patch) => void updateSettings(patch),
+        latest: latestRef.current,
+        replay: (a) => present(a, true),
+        openWhy: setWhyId,
+      })
+      if (msg) notify(msg)
+      return msg
+    },
+    [router, updateSettings, present, notify]
+  )
+
   const selectedDevice = useMemo(() => devices.find((d) => d.id === settings?.selectedDeviceId) ?? devices[0] ?? null, [devices, settings])
 
   const value: AppState = {
@@ -206,6 +239,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     liveText,
     whyId,
     openWhy: setWhyId,
+    runCommand,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

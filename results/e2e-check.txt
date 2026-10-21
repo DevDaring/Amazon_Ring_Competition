@@ -1,0 +1,79 @@
+Ring token: expired or missing (live-view checks expect the error message)
+
+PASS  Home loads with a status heading  (Watching Playground Device)
+PASS  Tab order: skip link, then "Turn on spoken announcements"
+PASS  Turn on spoken announcements: banner closes, focus on heading  (H1)
+PASS  Language button हिन्दी
+PASS  Language button বাংলা
+PASS  Language button Español
+PASS  Language button English
+PASS  Mode buttons Visual then Voice (transcript appears in Visual)
+PASS  Menu links open each screen  (/demo)
+PASS  Alt+1..8 shortcuts open each screen
+PASS  Demo: Doorbell press  (announced: Doorbell. Three vehicles are parked further away. [4812 ms])
+PASS  Demo: Motion: person  (announced: Three vehicles are parked further away. [4415 ms])
+PASS  Demo: Motion: vehicle  (announced: Three vehicles are parked further away. [4339 ms])
+PASS  Demo: Motion: general  (announced: Three vehicles are parked further away. [5003 ms])
+PASS  Demo: Motion: other  (announced: Three vehicles are parked further away. [4802 ms])
+PASS  Demo: Unknown subtype (“drone”)  (announced: Three vehicles are parked further away. [4929 ms])
+PASS  Demo: Camera offline  (announced: Playground Device camera is offline. [541 ms])
+PASS  Demo: replay switch shows idempotency (duplicate)  (second delivery reported as duplicate)
+PASS  Demo: test image upload is used and labelled Simulated  (Simulated: image uploaded in the Demo panel)
+PASS  Guardrail test: “A suspicious man is lurking…”  (Motion detected at front door.)
+PASS  Guardrail test: Race and gender in clothing text  (Motion detected at front door.)
+PASS  Guardrail test: “That is John Smith, your neighbour.”  (Motion detected at front door.)
+PASS  Guardrail test: Free text instead of JSON  (Motion detected at front door.)
+PASS  Guardrail test: A licence plate in the summary  (A white van is parked on your right, further away.)
+PASS  Replay button
+PASS  Alt+R replays
+PASS  Why dialog: opens, traps focus, Escape closes
+PASS  Alt+W opens Why; Close button closes
+PASS  Feedback: Correct  (Thanks. Saved as a correct example (4 in the dataset).)
+PASS  Feedback: That’s wrong  (skipped (last item is an answer, not an event))
+PASS  Feedback: Mute this type  (Muted button_press announcements from this camera.)
+PASS  Ask (typed): "Is the car still there?"  (Is the car still there?Yes, a vehicle is still there.)
+PASS  Ask (typed): "Who is it?" is refused  (Who is it?I don't identify people. I can tell you this: Three vehicles are parked further )
+PASS  Ask (typed): "Describe everything"  (Describe everythingFour vehicles are parked. Four vehicles parked in a parking lot.)
+PASS  Command (typed): "help" lists page buttons  (On this page you can say press, then: Replay; Why did it say that?. You can also say go to and a page name, sw)
+PASS  Command (typed): "switch to Hindi" then "English"
+PASS  Command (free-form): "Could you open the settings for me"
+PASS  Command (free-form): "Make it flash instead of talking"
+PASS  Command (free-form): "That description was not right" presses That’s wrong
+PASS  Command: unknown button gives a helpful reply
+PASS  Push to talk: "Speak after the beep", Cancel before beep
+PASS  Live: Start live view (expects clear error, token expired)  (The Ring Playground token has expired. Paste a new one in Settings.)
+PASS  Live: switch "Keep watching" toggles
+PASS  Live: switch "Show boxes" toggles
+PASS  Live: switch "Local narrator (no cloud)" toggles
+PASS  Timeline filter: Doorbell  (25 items)
+PASS  Timeline filter: People  (13 items)
+PASS  Timeline filter: Vehicles  (19 items)
+PASS  Timeline filter: Other motion  (33 items)
+PASS  Timeline filter: All  (53 items)
+PASS  Timeline: Why? on an event
+PASS  Expecting: add "a grey car in 10 minutes and my sister around 5"  (Got it: vehicle 3:26 PM–4:11 PM; visitor 4:15 PM–5:45 PM.)
+PASS  Expecting: Remove both new items
+PASS  Caregiver: digest text shown  (Wednesday: 41 vehicle alerts.)
+PASS  Caregiver: digest in Bengali  (বুধবার: 41টি গাড়ির সতর্কতা।)
+PASS  Caregiver: Create digest link  (http://localhost:3000/digest/KuyTU6TKP7eQ_chNxrKQH6EM)
+PASS  Caregiver: shared digest page opens (text only)  (Wednesday: 41 vehicle alerts.Covers the last 24 hours · generated 10/21/2026, 3:)
+PASS  Caregiver: Unlink removes the test link
+PASS  Pipeline: metrics and funnel  (90% cheaper than naive)
+PASS  Pipeline: funnel table opens
+PASS  Settings: invalid token is rejected with a message  (That does not look like a Ring access token (expected a JWT).)
+PASS  Settings switch: Doorbell presses
+PASS  Settings switch: People
+PASS  Settings switch: Vehicles
+PASS  Settings switch: Parcels
+PASS  Settings switch: Animals
+PASS  Settings switch: Other motion
+PASS  Settings switch: Quiet hours
+PASS  Settings: speaking speed slider
+PASS  Settings: Export dataset now  (Exported 3 new example(s); dataset holds 6. Saved in data/dataset.)
+PASS  Settings: Apply retention now  (Deleted 0 old event(s) and 0 file(s).)
+PASS  Settings: Wipe all data shows confirmation, Cancel keeps data
+PASS  Settings: Unmute (from the Mute test)  (1 unmuted)
+PASS  Account-link page without nonce explains itself  (This page is opened from the Ring app during account linking. The link is missin)
+PASS  Spoken free-form command via Alt+V on Demo ("I want to ring the doorbell")  (Doorbell. Three vehicles are parked further away. [4259 ms])
+
+75/75 checks passed; page errors: 0

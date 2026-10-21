@@ -39,6 +39,7 @@ Built for the Ring track of the Amazon *Build, Ship, Shape* Developer Hackathon,
 |---|---|
 | **Spoken door narration** | On a doorbell press or motion event, one spatial sentence of at most 25 words: count, object, action, position (left / centre / right, near / far). Wording follows confidence: 0.8 or more is stated plainly, 0.5–0.8 starts with "Looks like…", below 0.5 says "I can't tell what it is yet". |
 | **Ask the Door** | Push-to-talk (Alt+T) or typed questions. A small classifier routes cheap questions ("Is anyone still there?") to the object detector only, sends "What are they holding?", "Read the label" and "Describe everything" to the vision model, and refuses identity questions ("Who is it?") before any model is called. |
+| **Voice commands** | Control the whole app by voice from any screen (Alt+V or the **Voice command** button): "press doorbell press", "go to settings", "switch to Hindi", "make it flash instead of talking", "help". Common phrasings are matched by rules instantly; other sentences, in any of the four languages ("could you open the settings for me", "घंटी बजाओ"), are mapped by Amazon Nova Micro onto the buttons actually on screen. The model can only choose a real button, page, language or mode; feedback is built from the real button name. |
 | **Safety layer** | A pure, unit-tested `guard()` function with five layers (schema, forbidden attributes, judgment check, plausibility, fallback). Every announcement has a **Why did it say that?** panel showing each stage, what was filtered, the confidence and any suppressed output. |
 | **Four languages** | English, Hindi, Bengali and Spanish. The vision model emits language-neutral JSON from closed vocabularies; each language is rendered from fixed word lists, so no unchecked model text is ever translated. Voices: Amazon Polly, then Sarvam (Hindi/Bengali), Fish Audio, then the browser voice. |
 | **"I'm expecting…"** | "A grocery delivery and my sister around 5" becomes structured expectations (delivery type, vehicle colour, time window). Events are matched by objects, vehicles and time, never by who a person is. |
@@ -86,7 +87,7 @@ Or with Docker: `docker compose up` (Node 20 + ffmpeg image; `./data` is kept on
 4. Open **Demo** and press **Doorbell press** or **Motion: vehicle**. The signed payload goes through the real webhook route, and the announcement is spoken, captioned and logged, labelled **Simulated webhook**.
 5. Ask "Is the car still there?" or "Who is it?" on Home. Add an expectation, tap **That's wrong**, switch to **Visual** mode, open **Pipeline**, and run the **Guardrail test** samples on the Demo page.
 
-Keyboard: Alt+S turn on sound, Alt+1…8 switch screens, Alt+T push-to-talk, Alt+R replay the last announcement, Alt+W open "Why did it say that?".
+Keyboard: Alt+S turn on sound, Alt+V voice command, Alt+1…8 switch screens, Alt+T push-to-talk, Alt+R replay the last announcement, Alt+W open "Why did it say that?".
 
 ## How it works
 
@@ -147,6 +148,7 @@ On top of the five layers:
 - Charts have table equivalents; images have alt text.
 - `npm run a11y` loads all 8 screens in a real browser (installed Edge or Chrome), runs axe-core against WCAG 2.1 A/AA in both themes, records tab order and checks 200% text. The first run found one contrast problem (a dark-mode danger button), now fixed; the latest run reports zero violations on all 8 screens in both themes, and no horizontal scrolling at 200% text.
 - **Manual check with NVDA 2026.2 on Windows (Edge):** every control was reached and announced with the Tab key. The first pass found one real problem: "Turn on spoken announcements" was the 17th Tab stop, after the whole menu. It is now the second, right after the skip link, with an Alt+S shortcut, and focus moves to the page heading once sound is on.
+- **Voice capture:** after the beep, recording stops by itself 1.2 s after you finish speaking (10 s at most).
 - **Push-to-talk with a screen reader:** the same NVDA test found that the microphone recorded NVDA announcing the button. DoorVoice now changes the button and says "Speak after the beep", waits 1.5 s, beeps, and only then listens, without changing the page again. Echo cancellation is on, and screen-reader phrases ("Stop and send, toggle button, pressed") are stripped from spoken transcripts. Headphones remain the most reliable setup.
 - **Not yet done:** a full task-by-task log with NVDA, and passes with VoiceOver (macOS/iOS) and TalkBack (Android).
 
@@ -217,7 +219,7 @@ Test output: [`results/test-results.txt`](results/test-results.txt). Live run lo
 ## Tests
 
 ```bash
-npm test        # 119 passing, 2 opt-in live suites skipped
+npm test        # 144 passing, 2 opt-in live suites skipped
 ```
 
 - `tests/guardrails.test.ts`: 36 safety-layer cases (race, ethnicity, gender, age, religion, disability and body terms; "suspicious", "lurking", "casing"; names; identity claims; licence plates; printed names, addresses and IDs; schema failures; judgment and plausibility fallbacks).
@@ -226,6 +228,7 @@ npm test        # 119 passing, 2 opt-in live suites skipped
 - `tests/narrator-plugin.test.ts`: the cloud-free Accessible Narrator plugin.
 - Opt-in live suites: `RING_LIVE=1 npm test` (real Ring sandbox) and `MODELS_LIVE=1 npm test` (real Bedrock calls).
 - `npm run a11y`: browser accessibility scan (see [Accessibility](#accessibility)).
+- `node scripts/e2e-check.mjs [command.wav]`: with the app running, clicks every button on every screen in a real browser (language, mode, menu, Alt shortcuts, all Demo events, guardrail samples, Replay, Why dialog, feedback, typed and free-form commands, Live, Timeline filters, Expecting, Caregiver links, Pipeline, every Settings switch, wipe-confirm-cancel) and optionally a spoken command through the microphone. Your settings are restored afterwards. Latest run: **75/75 passed**, no page errors.
 - `node scripts/live-smoke.mjs`: with the app running and a valid token, starts the live view in a real browser, sends a simulated event, asks two questions and saves screenshots.
 
 ## Repository layout

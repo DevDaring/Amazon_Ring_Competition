@@ -32,6 +32,8 @@ export interface TextRequest {
   system: string
   prompt: string
   maxTokens?: number
+  /** 'tiny' = the cheapest text model (Nova Micro), for routing and classification. */
+  tier?: 'fast' | 'tiny'
 }
 
 export interface TextProvider {
