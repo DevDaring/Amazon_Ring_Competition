@@ -83,7 +83,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // The caregiver digest and the Ring account-link pages are public (no site password);
   // they must not call the password-protected APIs, or the browser would ask for it.
   const pathname = usePathname()
-  const isPublicPage = pathname.startsWith('/digest/') || pathname.startsWith('/link')
+  const isPublicPage = ['/digest/', '/link', '/privacy', '/terms'].some((p) => pathname.startsWith(p))
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const latestRef = useRef<Announcement | null>(null)
   const settingsRef = useRef<Settings | null>(null)

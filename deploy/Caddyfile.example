@@ -18,7 +18,7 @@ doorvoice.example.com {
 	# Open without the password: Ring must reach the webhook, a Ring user signs in on
 	# /link, and a caregiver opens a private digest link (the token is the credential).
 	@public {
-		path /api/ring/webhook /link /_next/* /icon.svg /favicon.ico
+		path /api/ring/webhook /link /privacy /terms /_next/* /icon.svg /favicon.ico
 	}
 	@linkPost {
 		method POST

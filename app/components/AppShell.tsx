@@ -27,7 +27,7 @@ export function AppShell({ children, demoMode }: { children: React.ReactNode; de
   const mainRef = useRef<HTMLElement>(null)
   const reduce = useReducedMotion()
   const nav = demoMode ? [...NAV, { href: '/demo', label: 'Demo' }] : NAV
-  const bare = pathname.startsWith('/digest/') || pathname.startsWith('/link')
+  const bare = ['/digest/', '/link', '/privacy', '/terms'].some((p) => pathname.startsWith(p))
 
   // Focus management: after client-side navigation, move focus to the page heading
   // so screen-reader users hear where they are.
