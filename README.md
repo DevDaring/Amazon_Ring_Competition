@@ -81,7 +81,7 @@ Or with Docker: `docker compose up` (Node 20 + ffmpeg image; `./data` is kept on
 
 ### Live demo
 
-A hosted copy runs at **https://doorvoice.154-12-116-152.sslip.io** (it will also answer at `doorvoice.koushikdeb.com` once that DNS record exists). The site is password-protected because it calls paid AWS services; judges receive the login in the Devpost testing instructions. Ring's webhook URL, the account-link page and caregiver digest links stay reachable without it.
+A hosted copy runs at **https://doorvoice.koushikdeb.com**. The site is password-protected because it calls paid AWS services; judges receive the login in the Devpost testing instructions. Ring's webhook URL, the account-link page and caregiver digest links stay reachable without it.
 
 ### Deploying on your own server
 
