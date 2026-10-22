@@ -275,6 +275,8 @@ results/                screenshots and test output from our runs
 - The block lists are English-centric. The name check can over-block capitalised word pairs. The judgment classifier is itself a model.
 - Not yet verified: VoiceOver and TalkBack passes, Bedrock Guardrails with a real guardrail ID, the S3 export, the Docker image build, and account linking against a real unclaimed token.
 
+Every Ring and AWS snag we hit, with steps, expected vs actual, severity, workaround and a suggestion, is in the [friction log](docs/FRICTION_LOG.md).
+
 ## Attribution
 
 DoorVoice is built on [AmazonAppDev/ring-api-helloworld](https://github.com/AmazonAppDev/ring-api-helloworld) (commit `76100aa`, MIT, Copyright 2026 Amazon). It reuses that sample's WebRTC (WHEP) player flow, live-event pattern and video-processor plugin system. DoorVoice is MIT ([LICENSE](LICENSE)); the original sample notice is kept in [NOTICE](NOTICE).
