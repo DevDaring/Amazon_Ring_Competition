@@ -6,6 +6,7 @@ import { publish } from '@/lib/server/bus'
 import { db } from '@/lib/server/db'
 import { takeUpload } from '@/lib/server/pending-uploads'
 import { enqueue } from '@/lib/server/queue'
+import { forgetAccount } from '@/lib/ring/tokens'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -32,6 +33,8 @@ export async function POST(req: NextRequest) {
   const e = parsed.event
   // Our simulator prefixes request_id with "sim-"; it is inside the signed body, so it cannot be forged without the key.
   const simulated = e.requestId.startsWith('sim-')
+  // The user removed DoorVoice in the Ring app: Ring revoked the tokens, so delete ours.
+  if (e.type === 'app_integration_removed' && e.accountId) await forgetAccount(e.accountId).catch(() => {})
 
   try {
     const row = await db.event.create({

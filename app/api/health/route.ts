@@ -11,7 +11,7 @@ export async function GET() {
   const c = config()
   return NextResponse.json({
     demoMode: c.DEMO_MODE,
-    ring: authStatus(),
+    ring: await authStatus(),
     aws: { configured: hasAws(), region: c.AWS_REGION, fast: c.BEDROCK_MODEL_FAST, strong: c.BEDROCK_MODEL_STRONG || null, judge: c.BEDROCK_MODEL_JUDGE, guardrailId: Boolean(c.BEDROCK_GUARDRAIL_ID), rekognition: c.USE_REKOGNITION },
     fallbacks: {
       openrouter: c.OPENROUTER_API_KEY.length > 0,

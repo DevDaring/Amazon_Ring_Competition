@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { config } from '../config'
+import { linkedAccessToken, linkedAccount } from './tokens'
 
 // Ring tokens never leave the server. A Playground token lasts about 30 minutes, so
 // Settings lets the user paste a fresh one without restarting; it is kept in
@@ -55,10 +56,12 @@ function freshestStaticToken(): { token: string; source: 'settings' | 'env' } | 
   return candidates[0] ?? null
 }
 
-export type AuthMode = 'sandbox_token' | 'refresh_token' | 'none'
+export type AuthMode = 'linked_account' | 'sandbox_token' | 'refresh_token' | 'none'
 
-export function authStatus() {
+export async function authStatus() {
   const c = config()
+  const linked = await linkedAccount().catch(() => null)
+  if (linked) return { mode: 'linked_account' as AuthMode, expiresAt: null, source: 'account linking', claimedBy: linked.claimedBy }
   if (c.RING_REFRESH_TOKEN) return { mode: 'refresh_token' as AuthMode, expiresAt: refreshed?.expiresAt ?? null, source: 'env' }
   const t = freshestStaticToken()
   if (!t) return { mode: 'none' as AuthMode, expiresAt: null, source: null }
@@ -84,6 +87,9 @@ export async function refreshAccessToken(refreshToken: string) {
 
 export async function getAccessToken(): Promise<string> {
   const c = config()
+  // A Ring account linked through the Ring Appstore flow wins; its token refreshes itself.
+  const linked = await linkedAccessToken()
+  if (linked) return linked
   if (c.RING_REFRESH_TOKEN) {
     if (refreshed && Date.now() < refreshed.expiresAt) return refreshed.token
     const data = await refreshAccessToken(c.RING_REFRESH_TOKEN)

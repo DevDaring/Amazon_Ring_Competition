@@ -59,7 +59,7 @@ export default function SettingsPage() {
       <Card className="space-y-3">
         <h2 className="text-2xl font-bold">Ring connection</h2>
         <p className="flex flex-wrap items-center gap-2">
-          {health?.ring?.mode === 'none' ? <Badge tone="bad">Not connected</Badge> : <Badge tone={expires !== null && expires <= 0 ? 'bad' : 'ok'}>{health?.ring?.mode === 'refresh_token' ? 'Refresh token' : 'Playground token'}</Badge>}
+          {health?.ring?.mode === 'none' ? <Badge tone="bad">Not connected</Badge> : <Badge tone={expires !== null && expires <= 0 ? 'bad' : 'ok'}>{health?.ring?.mode === 'linked_account' ? 'Linked Ring account (refreshes itself)' : health?.ring?.mode === 'refresh_token' ? 'Refresh token' : 'Playground token'}</Badge>}
           {expires !== null && <span>{expires > 0 ? `Token expires in about ${expires} min.` : 'Token expired.'}</span>}
         </p>
         <form

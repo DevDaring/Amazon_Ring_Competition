@@ -95,3 +95,17 @@ model QaLog {
   stagesJson String   @default("[]")
   createdAt  DateTime @default(now())
 }
+
+// Ring OAuth tokens received at the Token Exchange URL. "unclaimed" until a signed-in
+// user completes account linking on /link (nonce match), then "claimed".
+model RingLink {
+  id           String    @id @default(cuid())
+  accountId    String    @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  status       String    @default("unclaimed") // unclaimed | claimed
+  claimedBy    String?
+  createdAt    DateTime  @default(now())
+  claimedAt    DateTime?
+}

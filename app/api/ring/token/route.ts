@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 /** Token status only. The token itself is never sent to the browser. */
 export async function GET() {
-  return NextResponse.json(authStatus())
+  return NextResponse.json(await authStatus())
 }
 
 /** Paste a fresh Developer Playground token (they last ~30 minutes). */
@@ -22,14 +22,14 @@ export async function POST(req: NextRequest) {
   clearDeviceCache()
   try {
     const devices = await getDevices(true)
-    return NextResponse.json({ ok: true, ...authStatus(), devices: devices.length })
+    return NextResponse.json({ ok: true, ...(await authStatus()), devices: devices.length })
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message, ...authStatus() }, { status: 400 })
+    return NextResponse.json({ ok: false, error: (e as Error).message, ...(await authStatus()) }, { status: 400 })
   }
 }
 
 export async function DELETE() {
   clearRuntimeToken()
   clearDeviceCache()
-  return NextResponse.json(authStatus())
+  return NextResponse.json(await authStatus())
 }

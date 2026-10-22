@@ -15,14 +15,12 @@ doorvoice.example.com {
 		max_size 10MB
 	}
 
-	# Open without the password: Ring must reach the webhook, a Ring user signs in on
-	# /link, and a caregiver opens a private digest link (the token is the credential).
+	# Open without the password: Ring's backend must reach the webhook and the Token
+	# Exchange URL, and a caregiver opens a private digest link (the token is the
+	# credential). /link stays behind the password: that login is Ring's mandatory
+	# partner sign-in before a nonce is matched.
 	@public {
-		path /api/ring/webhook /link /privacy /terms /_next/* /icon.svg /favicon.ico
-	}
-	@linkPost {
-		method POST
-		path /api/ring/link
+		path /api/ring/webhook /api/ring/oauth/token /privacy /terms /_next/* /icon.svg /favicon.ico
 	}
 	@digest {
 		path /digest/*
@@ -32,9 +30,6 @@ doorvoice.example.com {
 		query token=*
 	}
 	handle @public {
-		reverse_proxy 127.0.0.1:8190
-	}
-	handle @linkPost {
 		reverse_proxy 127.0.0.1:8190
 	}
 	handle @digest {
