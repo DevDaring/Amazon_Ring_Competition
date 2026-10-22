@@ -277,4 +277,4 @@ results/                screenshots and test output from our runs
 
 ## Attribution
 
-DoorVoice is built on [AmazonAppDev/ring-api-helloworld](https://github.com/AmazonAppDev/ring-api-helloworld) (commit `76100aa`, MIT, Copyright 2026 Amazon). It reuses that sample's WebRTC (WHEP) player flow, live-event pattern and video-processor plugin system. Both licence notices are in [LICENSE](LICENSE).
+DoorVoice is built on [AmazonAppDev/ring-api-helloworld](https://github.com/AmazonAppDev/ring-api-helloworld) (commit `76100aa`, MIT, Copyright 2026 Amazon). It reuses that sample's WebRTC (WHEP) player flow, live-event pattern and video-processor plugin system. DoorVoice is MIT ([LICENSE](LICENSE)); the original sample notice is kept in [NOTICE](NOTICE).
